@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event Photo Album</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #e6d7b3;
+      color: #141413;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h1 {
+      color: #201e75;
+    }
+
+    input[type="file"] {
+      margin: 10px 0;
+    }
+
+    .btn {
+      background-color: #201e75;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn:disabled {
+      background-color: #aaa;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #141413;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Your Event Photos</h1>
+    <p>You can upload up to <span id="photoLimit">15</span> photos.</p>
+    <input type="file" id="photoInput" accept="image/*" multiple>
+    <button class="btn" id="uploadBtn" disabled>Upload Photos</button>
+    <div class="footer">
+      <p>Upload closes at: <span id="endTime"></span></p>
+    </div>
+  </div>
+
+  <script>
+    const photoInput = document.getElementById('photoInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const photoLimit = 15; // Change this value as needed
+    const endTime = new Date(Date.now() + 30 * 60 * 1000); // Set 30-minute limit
+
+    document.getElementById('photoLimit').textContent = photoLimit;
+    document.getElementById('endTime').textContent = endTime.toLocaleTimeString();
+
+    // Enable button if files are selected
+    photoInput.addEventListener('change', () => {
+      if (photoInput.files.length > 0 && photoInput.files.length <= photoLimit) {
+        uploadBtn.disabled = false;
+      } else {
+        uploadBtn.disabled = true;
+      }
+    });
+
+    uploadBtn.addEventListener('click', async () => {
+      const files = photoInput.files;
+      if (files.length > photoLimit) {
+        alert(`You can only upload up to ${photoLimit} photos.`);
+        return;
+      }
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('photos', file);
+      }
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          alert('Photos uploaded successfully!');
+          photoInput.value = '';
+          uploadBtn.disabled = true;
+        } else {
+          alert('Error uploading photos. Please try again.');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Error uploading photos. Please check your connection.');
+      }
+    });
+
+    // Disable uploads after the time limit
+    setInterval(() => {
+      if (new Date() > endTime) {
+        photoInput.disabled = true;
+        uploadBtn.disabled = true;
+        alert('Upload period has ended.');
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
